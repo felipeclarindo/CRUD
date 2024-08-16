@@ -2,3 +2,4 @@ python-dotenv
 flask_cors
 oracledb
 requests
+pytest
