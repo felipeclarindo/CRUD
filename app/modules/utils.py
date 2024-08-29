@@ -1,45 +1,28 @@
-from ...database.config import connect
+import requests
 
-def validate_table(table: str) -> bool:
+
+def confirm_exit(response: str) -> bool:
     try:
-        if table:
-            if table.isalnum():
-                connection = connect()
+        if response:
+            if response.lower() in ["sim", "s", "não", "nao", "n"]:
+                return True
             else:
-                raise Exception("O nome da tabela não pode conter caracteres.")
+                raise InvalidResponseError("Responda com Sim/Não")
         else:
-            raise Exception("O nome da tabela não pode ser vazio.")
-    except ValueError as v:
-        print(f"Error: {v}")
-    except Exception as e:
+            raise InvalidResponseError("Você precisa digitar algo!")
+    except InvalidResponseError as e:
         print(f"Error: {e}")
+    return False
 
-def validate_column(column:str) -> bool:
-    try:
-        pass
-    except ValueError as v:
-        print(f"Error: {v}")
-    except Exception as e:
-        print(f"Error: {e}")
 
-def validate_type(type:int) -> int | str:
+def confirm_requisition(response: requests.models.Response, method: str):
     try:
-        match type:
-            case 1:
-                return int
-            case 2:
-                return str
-            case _:
-                raise Exception("Opção invalida")
-    except ValueError as v:
-        print(f"Error: {v}")
-    except Exception as e:
-        print(f"Error: {e}")
-
-def validate_value(value:str) -> bool:
-    try:
-        pass
-    except ValueError as v:
-        print(f"Error: {v}")
-    except Exception as e:
-        print(f"Error: {e}")
+        if response.status_code == 200:
+            return True
+        else:
+            raise RequestError(
+                f"Erro ao realizar o método {method}, \nverifique as informações informadas e tente novamente. "
+            )
+    except RequestError as e:
+        print(e)
+    return False
