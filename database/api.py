@@ -1,74 +1,107 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from models import Crud
 
 # Inicializando a aplicação
 app = Flask(__name__)
-# Permite que o front end faça requisições, mesmo em dominios diferentes
-CORS(app)
+CORS(app)  # Permite que o front-end faça requisições, mesmo em domínios diferentes
 
-# Instanciando o Crud
-crud = Crud()
-
-# Criando rota principal 
-@app.route('/')
+# Criando rota principal
+@app.route("/")
 def index():
-    return render_template("form.html")
+    return jsonify(
+        {
+            "name": "Crud Api",
+            "methods": {
+                "/posts": "post new data",
+                "/get": "get data",
+                "/update": "update data",
+                "/delete": "delete data",
+            },
+            "librarys": ["flask", "flask_cors"],
+            "developer": "felipeclarindo",
+            "github": "https://github.com/felipeclarindo",
+        }
+    )
 
 # Criando rota de envio de dados
-@app.route("/post", methods = ['POST'])
-def post_relatos(table:str, datas:dict):
-    response = crud.post(table, datas)
-    if response["status"] == "succes":
-        return jsonify({"message":"Dados inseridos no banco de dados com sucesso!"})
+@app.route("/post", methods=["POST"])
+def post():
+    datas = request.json
+    crud = Crud()
+    response = crud.post(datas)
+    if response["status"] == "success":
+        return jsonify({"message": "Dados inseridos no banco de dados com sucesso!"})
     else:
-        return jsonify({"message": "404"})
+        return jsonify({"message": response["message"]})
 
 # Criando rota de atualização de dados
-@app.route("/put", methods=['PUT'])
-def put_relatos(id:int, datas:dict):
-    response = crud.put(id, datas)
+@app.route("/put", methods=["PUT"])
+def put():
+    datas = request.json
+    id = datas.get('id')
+    column = datas.get("column")
+    value = datas.get("value")
+    crud = Crud()
+    response = crud.put(id, column, value)
     if response["status"] == "success":
-        return jsonify({"message": "Dados atualizado com sucesso"})
+        return jsonify({"message": "Dados atualizados com sucesso"})
     else:
-        return jsonify({"message": "404"})
+        return jsonify({"message": response["message"]})
 
-# Criando rota de atualização de um unico dado
-@app.route("/patch")
-def patch_relatos(table:str, id:list, datas:dict):
-    response = crud.patch(table, id, datas)
-    if response["status"] == "succes":
-        return jsonify({"message": "Dado atualizados com sucesso"})
+# Criando rota de atualização de um único dado
+@app.route("/patch", methods=["PATCH"])
+def patch():
+    datas = request.json
+    table = datas.get("table")
+    id = datas.get("id")
+    column = datas.get("column")
+    value = datas.get("value")
+    crud = Crud()
+    response = crud.patch(table, id, column, value)
+    if response["status"] == "success":
+        return jsonify({"message": "Dado atualizado com sucesso"})
     else:
-        return jsonify({"message": "404"})
+        return jsonify({"message": response["message"]})
 
-# Criando rota de removação de dado
-@app.route("/delete")
-def delete_relatos(id:int):
-    deleted = crud.delete(id)
-    if deleted["status"] == "success":
-        return jsonify({"message":"Registro deletado com sucesso!"})
+# Criando rota de remoção de dado
+@app.route("/delete", methods=["DELETE"])
+def delete():
+    datas = request.json
+    table = datas.get("table")
+    id = datas.get("id")
+    crud = Crud()
+    response = crud.delete(table, id)
+    if response["status"] == "success":
+        return jsonify({"message": "Usuário deletado com sucesso"})
     else:
-        return jsonify({"message": "404"})
-    
+        return jsonify({"message": response["message"]})
+
 # Criando rota de pegar dados
-@app.route("/get", methods=['GET'])
-def get_relatos(table:str):
+@app.route("/get", methods=["GET"])
+def get():
+    data = request.json
+    table = data.pop("table")
+    crud = Crud()
     response = crud.get(table)
     if response["status"] == "success":
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": "Dados recebidos com sucesso"})
     else:
-        return jsonify({"message": "404"})
+        return jsonify({"message": response["message"]})
 
 # Criando rota de pegar dado com id
-@app.route("/get-with-id")
-def get_relatos_with_id(table:str, id:int):
+@app.route("/get-with-id", methods=["GET"])
+def get_with_id():
+    datas = request.json
+    table = datas.get("table")
+    id = datas.get("id")
+    crud = Crud()
     response = crud.get_with_id(table, id)
-    if response["status"] == "succes":
-        return jsonify({"message": response["message"]})
+    if response["status"] == "success":
+        return jsonify({"message": "Dados recebidos com sucesso"})
     else:
-        return jsonify({"message": "404"})
+        return jsonify({"message": response["message"]})
 
 if __name__ == "__main__":
     # Executa a aplicação
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
