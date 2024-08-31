@@ -1,8 +1,8 @@
 from ..app.modules.validations import (
     validate_column,
     validate_table,
-    validate_type,
     validate_value,
+    validate_id
 )
 
 
@@ -17,12 +17,12 @@ def tests_validate_column_passeds():
 
 def tests_validate_column_fails():
     assert validate_column("") == False
-    assert validate_column("") == False
-    assert validate_column("") == False
-    assert validate_column("") == False
-    assert validate_column("") == False
-    assert validate_column("") == False
-    assert validate_column("") == False
+    assert validate_column("!414") == False
+    assert validate_column("##%#@!") == False
+    assert validate_column("   !!") == False
+    assert validate_column(" !$)K$ ") == False
+    assert validate_column("alun a") == False
+    assert validate_column("pa$aa aa") == False
 
 
 def tests_validate_table_passeds():
@@ -46,20 +46,20 @@ def tests_validate_table_fails():
     assert validate_table("    ta  ble   aa    ") == False
 
 
-def tests_validate_type_passeds():
-    assert validate_type("1") == "Int"
-    assert validate_type("2") == "Float"
-    assert validate_type("3") == "String"
-    assert validate_type("4") == "Bool"
-    assert validate_type("5") == "Date"
+def tests_validate_id_passeds():
+    assert validate_id("1") == 1
+    assert validate_id("2") == 2
+    assert validate_id("3") == 3
+    assert validate_id("4") == 4
+    assert validate_id("5") == 5
 
 
-def tests_validate_type_fails():
-    assert validate_type("a") == False
-    assert validate_type(" 8") == False
-    assert validate_type("   46   ") == False
-    assert validate_type("111 ") == False
-    assert validate_type("   !4124@#!") == False
+def tests_validate_id_fails():
+    assert validate_id("a") == False
+    assert validate_id(" 8") == False
+    assert validate_id("   46   ") == False
+    assert validate_id("111 ") == False
+    assert validate_id("   !4124@#!") == False
 
 
 def tests_validate_value_passeds():
