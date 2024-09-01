@@ -1,6 +1,6 @@
 # Crud
 
-Crud com métodos de inserção, atualização, captura, remoção de dados utilizando a biblioteca requests em python
+Crud com métodos de inserção, atualização, captura, remoção de dados de um banco de dados oracle utilizando a biblioteca requests em python
 
 ## Instalação
 
