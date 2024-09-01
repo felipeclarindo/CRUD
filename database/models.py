@@ -19,10 +19,10 @@ class Crud:
         try:
             table = data.pop("table")
             columns = ", ".join(data.keys())
-            placeholders = ", ".join([":" + key for key in data.keys()])
-            command = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+            values = ", ".join(data.values())
+            command = f"INSERT INTO {table} ({columns}) VALUES ({values})"
             with self.connection.cursor() as cursor:
-                cursor.execute(command, data)
+                cursor.execute(command)
             self.connection.commit()
             return {"status": "success", "message": "Dados inseridos com sucesso!"}
         except ValueError as v:

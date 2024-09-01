@@ -35,9 +35,9 @@ def post():
     """
     Rota para inserção de dados
     """
-    datas = request.json
+    data = request.get_json()
     crud = Crud()
-    response = crud.post(datas)
+    response = crud.post(data)
     if response["status"] == "success":
         return jsonify({"message": "Dados inseridos no banco de dados com sucesso!"})
     else:
