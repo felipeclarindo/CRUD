@@ -17,12 +17,14 @@ def index():
         {
             "name": "Crud Api",
             "methods": {
-                "/posts": "post new data",
-                "/get": "get data",
-                "/update": "update data",
+                "/post": "post new data",
+                "/put": "update data",
+                "/patch": "update single field",
                 "/delete": "delete data",
+                "/get": "get data",
+                "/get-with-id": "get data by id",
             },
-            "librarys": ["flask", "flask_cors"],
+            "libraries": ["flask", "flask_cors"],
             "developer": "felipeclarindo",
             "github": "https://github.com/felipeclarindo",
         }
@@ -39,9 +41,9 @@ def post():
     crud = Crud()
     response = crud.post(data)
     if response["status"] == "success":
-        return jsonify({"message": "Dados inseridos no banco de dados com sucesso!"})
+        return jsonify({"message": response["message"]}), 201
     else:
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 400
 
 
 # Criando rota de atualização de dados
@@ -51,15 +53,16 @@ def put():
     Rota de atualização de todos os dados
     """
     datas = request.json
+    table = datas.get("table")
     id = datas.get("id")
-    column = datas.get("column")
-    value = datas.get("value")
+    columns = datas.get("columns")
+    values = datas.get("values")
     crud = Crud()
-    response = crud.put(id, column, value)
+    response = crud.put(table, columns, values, id)
     if response["status"] == "success":
-        return jsonify({"message": "Dados atualizados com sucesso"})
+        return jsonify({"message": response["message"]}), 200
     else:
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 400
 
 
 # Criando rota de atualização de um único dado
@@ -76,16 +79,16 @@ def patch():
     crud = Crud()
     response = crud.patch(table, id, column, value)
     if response["status"] == "success":
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 200
     else:
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 400
 
 
 # Criando rota de remoção de dado
 @app.route("/delete", methods=["DELETE"])
 def delete():
     """
-    Rota para deletar usuario pelo id
+    Rota para deletar dado pelo id
     """
     datas = request.json
     table = datas.get("table")
@@ -93,9 +96,9 @@ def delete():
     crud = Crud()
     response = crud.delete(table, id)
     if response["status"] == "success":
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 200
     else:
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 400
 
 
 # Criando rota de pegar dados
@@ -104,13 +107,17 @@ def get():
     """
     Rota de pegar dados
     """
-    table = request.args.get("table")
+    data = request.json
+    table = data.get("table")
     crud = Crud()
     response = crud.get(table)
     if response["status"] == "success":
-        return jsonify({"status": response["status"], "content": response["message"]})
+        return (
+            jsonify({"status": response["status"], "content": response["message"]}),
+            200,
+        )
     else:
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 400
 
 
 # Criando rota de pegar dado com id
@@ -119,16 +126,23 @@ def get_with_id():
     """
     Rota de pegar dados pelo id
     """
-    table = request.args.get("table")
-    id = request.args.get("id")
+    data = request.json
+    table = data.get("table")
+    id = data.get("id")
     crud = Crud()
     response = crud.get_with_id(table, id)
     if response["status"] == "success":
-        return jsonify(
-            {"message": "Dados recebidos com sucesso", "content": response["message"]}
+        return (
+            jsonify(
+                {
+                    "message": "Dados recebidos com sucesso",
+                    "content": response["message"],
+                }
+            ),
+            200,
         )
     else:
-        return jsonify({"message": response["message"]})
+        return jsonify({"message": response["message"]}), 400
 
 
 if __name__ == "__main__":
