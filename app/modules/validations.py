@@ -33,7 +33,7 @@ def validate_column(column: str) -> bool:
 
 def validate_value(value: str) -> bool:
     try:
-        value = value.strip()
+        value = value.strip().replace(" ", "")
         if value:
             if value.isalnum():
                 return True
