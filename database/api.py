@@ -38,29 +38,12 @@ def post():
     Rota para inserção de dados
     """
     data = request.get_json()
+    if not data or not isinstance(data, dict):
+        return jsonify({"message": "Dados invalidos ou ausentes."}), 400
     crud = Crud()
     response = crud.post(data)
-    if response["status"] == "success":
+    if response.get("status") == "success":
         return jsonify({"message": response["message"]}), 201
-    else:
-        return jsonify({"message": response["message"]}), 400
-
-
-# Criando rota de atualização de dados
-@app.route("/put", methods=["PUT"])
-def put():
-    """
-    Rota de atualização de todos os dados
-    """
-    datas = request.json
-    table = datas.get("table")
-    id = datas.get("id")
-    columns = datas.get("columns")
-    values = datas.get("values")
-    crud = Crud()
-    response = crud.put(table, columns, values, id)
-    if response["status"] == "success":
-        return jsonify({"message": response["message"]}), 200
     else:
         return jsonify({"message": response["message"]}), 400
 
@@ -71,14 +54,21 @@ def patch():
     """
     Rota para atualização de um único dado
     """
-    datas = request.json
+    datas = request.get_json()
+    if not datas:
+        return jsonify({"message": "Dados não encontrados."})
+
     table = datas.get("table")
     id = datas.get("id")
     column = datas.get("column")
     value = datas.get("value")
+
+    if not table or not id or not column or not value:
+        return jsonify({"message": response["message"]})
+
     crud = Crud()
     response = crud.patch(table, id, column, value)
-    if response["status"] == "success":
+    if response.get("status") == "success":
         return jsonify({"message": response["message"]}), 200
     else:
         return jsonify({"message": response["message"]}), 400
@@ -90,12 +80,19 @@ def delete():
     """
     Rota para deletar dado pelo id
     """
-    datas = request.json
+    datas = request.get_json()
+    if not datas:
+        return jsonify({"message": "Dados não encontrados."})
+
     table = datas.get("table")
     id = datas.get("id")
+
+    if not table or not id:
+        return jsonify({"message": "Parâmetros 'table' e 'id' são obrigatorios."})
+
     crud = Crud()
     response = crud.delete(table, id)
-    if response["status"] == "success":
+    if response.get("status") == "success":
         return jsonify({"message": response["message"]}), 200
     else:
         return jsonify({"message": response["message"]}), 400
@@ -107,38 +104,14 @@ def get():
     """
     Rota de pegar dados
     """
-    data = request.json
-    table = data.get("table")
+    table = request.args.get("table")
+    if not table:
+        return jsonify({"message": "Parâmetro 'table' é obrigatório."}), 400
     crud = Crud()
     response = crud.get(table)
-    if response["status"] == "success":
+    if response.get("status") == "success":
         return (
-            jsonify({"status": response["status"], "content": response["message"]}),
-            200,
-        )
-    else:
-        return jsonify({"message": response["message"]}), 400
-
-
-# Criando rota de pegar dado com id
-@app.route("/get-with-id", methods=["GET"])
-def get_with_id():
-    """
-    Rota de pegar dados pelo id
-    """
-    data = request.json
-    table = data.get("table")
-    id = data.get("id")
-    crud = Crud()
-    response = crud.get_with_id(table, id)
-    if response["status"] == "success":
-        return (
-            jsonify(
-                {
-                    "message": "Dados recebidos com sucesso",
-                    "content": response["message"],
-                }
-            ),
+            jsonify({"status": response.get("status"), "content": response["message"]}),
             200,
         )
     else:
