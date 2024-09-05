@@ -20,6 +20,7 @@ class App:
     def __init__(self) -> None:
         self.url = "http://127.0.0.1:5000"
         self.table = None
+        self.valid = True
 
     def clear(self) -> None:
         """
@@ -42,6 +43,7 @@ class App:
         """
         self.clear()
         self.menu_option("Crud")
+        print(f"Manipulando tabela: {self.table}")
         print("[1] Post")
         print("[2] Get")
         print("[3] Patch")
@@ -100,31 +102,84 @@ class App:
         while not id_valid:
             try:
                 self.menu_option(option)
-                id = str(input("Informe o id: ")).strip()
-                id_valid = validate_id(id)
-                if not id_valid:
-                    input("APERTE ENTER PARA CONTINUAR")
+                print("Buscando usúarios...")
+                sleep(1)
+                self.get(option, search=True, method=option)
+                if self.valid:
+                    id = str(input("Informe o id: ")).strip()
+                    id_valid = validate_id(id)
+                    if not id_valid:
+                        input("APERTE ENTER PARA CONTINUAR")
+                else:
+                    return None
             except ValueError:
                 print("ID inválido. Por favor, insira um número válido.")
                 input("APERTE ENTER PARA CONTINUAR")
         return int(id)
-
+    
+    def view_dados(self, dados: list[list], option: str, id = False):
+        dados_list = ["id", "nome", "idade"]
+        self.menu_option(option)
+        if id:
+            self.menu_option("ids")
+        if dados:
+            for dado in dados:
+                if len(dado) < len(dados_list):
+                    print("Dados incompletos encontrados!")
+                    input("APERTE ENTER PARA CONTINUAR")
+                    continue
+                if id:
+                    nome = dado[1]
+                    valor = dado[0]
+                    print(f"{valor:<3} ->   {nome}")
+                else:
+                    self.menu_option(option)
+                    for indice, campo in enumerate(dados_list):
+                        valor = dado[indice] if indice < len(dado) else "Dados ausentes"
+                        print(f"{campo:<8} ->   {valor}")
+                    input("APERTE ENTER PARA VER O PRÓXIMO DADO!") if len(dados) > 1 else "APERTE ENTER PARA CONTINUAR"
+            if not id:
+                self.menu_option(option)
+                print("Dados exibidos com sucesso!")
+                input("APERTE ENTER PARA CONTINUAR")
+        else:
+            self.valid = False
+            print("Nenhum dado encontrado!")
+            input("APERTE ENTER PARA CONTINUAR")
+    
+    def voltar_menu(self, option:str)-> bool:
+        confirmValid = False
+        while not confirmValid:
+            self.menu_option(option)
+            confirm = str(input("Deseja voltar para o menu? [Sim/Não]\n")).lower().strip()
+            confirmValid = confirm_exit(confirm)
+            if not confirmValid:
+                input("APERTE ENTER PARA CONTINUAR")
+        if confirm in ["sim", "s"]:
+            self.menu_option(option)
+            print("Voltando ao menu...")
+            sleep(1)
+            return True
+        return False
+            
     def post(self) -> None:
         """
         Método para enviar dados (POST).
         """
         try:
-            data = {"table": self.table}
+            dados = {}
             while True:
                 option = "post"
                 self.menu_option(option)
                 column = self.input_column(option)
                 value = self.input_value(option)
-                if column not in data:
-                    data[column] = value
+                if column not in dados:
+                    dados[column] = value
                     saida_valida = False
                     while not saida_valida:
                         self.menu_option(option)
+                        dados_view = dados
+                        print("\n".join(f"{dado:<6} -> {valor:>6}" for dado, valor in dados_view.items() if dado != "message"))
                         confirm = (
                             input(
                                 "Todos os dados foram adicionados com sucesso? [Sim/Não]\n"
@@ -136,28 +191,41 @@ class App:
                         if not saida_valida:
                             input("APERTE ENTER PARA CONTINUAR")
                     if confirm in ["sim", "s"]:
-                        response = requests.post(f"{self.url}/post", json=data)
+                        dados["table"] = self.table
+                        new_dict = {dado: valor for dado, valor in dados.items() if dado != "message"}
+                        response = requests.post(f"{self.url}/post", json= new_dict)
                         self.menu_option(option)
                         if response.status_code == 201:
-                            print("dados enviados com sucesso!")
+                            try:
+                                dados = response.json()
+                            except ValueError:
+                                print("Erro ao decodificar a resposta JSON.")
+                                input("APERTE ENTER PARA CONTINUAR")
+                            print(dados.get("message"))
                             input("APERTE ENTER PARA CONTINUAR")
+                            if self.voltar_menu(option):
+                                break
+                            else:
+                                self.menu_option(option)
+                                print(f"Reiniciando método: {option}...")
+                                sleep(1)
+                                continue
+                        else:
+                            try:
+                                error_message = response.json().get("message", "Nenhuma mensagem de erro fornecida.")
+                            except ValueError:
+                                error_message = response.text
+                            print(f"Erro ao enviar dados: {response.status_code} - {error_message}")
+                            input("APERTE ENTER PARA CONTINUAR")
+
+                        if self.voltar_menu(option):
                             break
                         else:
-                            print(
-                                f"Erro ao enviar dados: {response.status_code} - {response.text["message"]}"
-                            )
-                            input("APERTE ENTER PARA CONTINUAR")
-                        confirmValid = False
-                        while not confirmValid:
-                            confirm = str(input("Deseja voltar para o menu? [Sim/Não]")).lower().strip()
-                            confirmValid = confirm_exit(confirm)
-                            if not confirmValid:
-                                input("APERTE ENTER PARA CONTINUAR")
-                        if confirm in ["sim", "s"]:
+                            dados = {}
                             self.menu_option(option)
-                            print("Voltando para o menu")
+                            print(f"Reiniciando método: {option}...")
                             sleep(1)
-                            break
+                            continue
                 else:
                     print("Dado já adicionado")
                     input("APERTE ENTER PARA CONTINUAR")
@@ -168,7 +236,7 @@ class App:
             print(f"Erro: {e}")
             input("APERTE ENTER PARA CONTINUAR")
 
-    def get(self) -> None:
+    def get(self,option: str = "get", search: bool = False, method:str = "") -> None:
         """
         Método para obter dados (GET).
         """
@@ -180,37 +248,56 @@ class App:
             tentativas = 0
             max_tentativas = 3
             while tentativas < max_tentativas:
-                option = "get"
-                self.menu_option(option)
-                data = {"table": self.table}
-                response = requests.get(f"{self.url}/get", json=data)
+                params = {"table": self.table}
+                response = requests.get(f"{self.url}/get", params=params)
                 if response.status_code == 200:
-                    print("Requisição bem sucedida!")
-                    input("APERTE ENTER PARA CONTINUAR")
-                    self.menu_option("Get")
-                    datas = json.load(response.content)
-                    print(datas)
-                    break
+                    if search:
+                        try:
+                            dados = response.json()
+                        except ValueError:
+                            print("Erro ao decodificar a resposta JSON.")
+                            input("APERTE ENTER PARA CONTINUAR")
+                        tentativas = 2
+                        dados = json.loads(dados.get("content"))
+                        self.view_dados(dados, option = method, id = True)
+                    else:
+                        self.menu_option(option)
+                        print("Requisição bem sucedida!")
+                        input("APERTE ENTER PARA CONTINUAR")
+                        self.menu_option(option)
+                        try:
+                            dados = response.json()
+                        except ValueError:
+                            print("Erro ao decodificar a resposta JSON.")
+                            input("APERTE ENTER PARA CONTINUAR")
+                        dados = json.loads(dados.get("content"))
+                        self.view_dados(dados, option)
+                        if self.voltar_menu(option):
+                            break
+                        else:
+                            self.menu_option(option)
+                            print(f"Reiniciando método: {option}...")
+                            sleep(1)
+                            continue
                 else:
                     print("Falha ao obter dados após várias tentativas.")
+                    input("APERTE ENTER PARA CONTINUAR")
                 tentativas += 1
-                confirmValid = False
-                while not confirmValid:
-                    confirm = str(input("Deseja voltar para o menu? [Sim/Não]")).lower().strip()
-                    confirmValid = confirm_exit(confirm)
-                    if not confirmValid:
-                        input("APERTE ENTER PARA CONTINUAR")
-                if confirm in ["sim", "s"]:
-                    self.menu_option(option)
-                    print("Voltando para o menu")
-                    sleep(1)
-                    break
+                if not search:
+                    if self.voltar_menu(option):
+                        break
+                    else:
+                        self.menu_option(option)
+                        print(f"Reiniciando método: {option}")
+                        sleep(1)
+                        continue
         except requests.RequestException as e:
             print(f"Erro na requisição: {e}")
+            input("APERTE ENTER PARA CONTINUAR")
         except Exception as e:
             print(f"Erro: {e}")
-        finally:
             input("APERTE ENTER PARA CONTINUAR")
+
 
     def patch(self) -> None:
         """
@@ -219,34 +306,40 @@ class App:
         try:
             while True:
                 option = "patch"
-                self.menu_option(option)
-                column = self.input_column(option)
-                new_value = self.input_value(option, new=True)
                 id = self.input_id(option)
-                data = {
-                    "table": self.table,
-                    "id": id,
-                    "column": column,
-                    "value": new_value,
-                }
-                response = requests.patch(f"{self.url}/patch", json=data)
-                if response.status_code == 200:
-                    print("Dados atualizados com sucesso!")
-                    break
-                else:
-                    print(f"Erro ao atualizar dados: {response.status_code}")
-                    input("APERTE ENTER PARA CONTINUAR")
-                confirmValid = False
-                while not confirmValid:
-                    confirm = str(input("Deseja voltar para o menu? [Sim/Não]")).lower().strip()
-                    confirmValid = confirm_exit(confirm)
-                    if not confirmValid:
-                        input("APERTE ENTER PARA CONTINUAR")
-                if confirm in ["sim", "s"]:
+                if self.valid and id:
+                    option_id = f"{option} id: {id}"
+                    column = self.input_column(option_id)
+                    new_value = self.input_value(option_id, new=True)
+                    dados = {
+                        "table": self.table,
+                        "id": id,
+                        "column": column,
+                        "value": new_value,
+                    }
+                    response = requests.patch(f"{self.url}/patch", json=dados)
                     self.menu_option(option)
-                    print("Voltando para o menu")
-                    sleep(1)
-                    break
+                    if response.status_code == 200:
+                        print("Dados atualizados com sucesso!")
+                        input("APERTE ENTER PARA CONTINUAR")
+                        if self.voltar_menu(option):
+                            break
+                        else:
+                            self.menu_option(option)
+                            print(f"Reiniciando método: {option}...")
+                            sleep(1)
+                            continue
+                    else:
+                        print(f"Erro ao atualizar dados: {response.status_code}")
+                        input("APERTE ENTER PARA CONTINUAR")
+                else:
+                    if self.voltar_menu(option):
+                        break
+                    else:
+                        self.menu_option(option)
+                        print(f"Reiniciando método: {option}")
+                        sleep(1)
+                        continue
 
         except requests.RequestException as e:
             print(f"Erro na requisição: {e}")
@@ -262,29 +355,30 @@ class App:
         try:
             while True:
                 option = "delete"
-                self.menu_option(option)
                 id = self.input_id(option)
-                data = {"table": self.table, "id": id}
-                response = requests.delete(f"{self.url}/delete", json=data)
-                if response.status_code == 200:
-                    print("Dados deletados com sucesso!")
-                    input("APERTE ENTER PARA CONTINUAR")
-                    break
-                else:
-                    print(
-                        f"Falha ao deletar os dados\nCode: {response.status_code}"
-                    )
-                confirmValid = False
-                while not confirmValid:
-                    confirm = str(input("Deseja voltar para o menu? [Sim/Não]")).lower().strip()
-                    confirmValid = confirm_exit(confirm)
-                    if not confirmValid:
+                if self.valid and id:
+                    dados = {"table": self.table, "id": id}
+                    response = requests.delete(f"{self.url}/delete", json=dados)
+                    if response.status_code == 200:
+                        self.menu_option(option)
+                        response = response.json()
+                        print(response["message"])
                         input("APERTE ENTER PARA CONTINUAR")
-                if confirm in ["sim", "s"]:
-                    self.menu_option(option)
-                    print("Voltando para o menu")
-                    sleep(1)
-                    break
+                        if self.voltar_menu(option):
+                            break
+                        else:
+                            self.menu_option(option)
+                            print(f"Reiniciando método: {option}...")
+                            sleep(1)
+                            continue
+                else:
+                    if self.voltar_menu(option):
+                        break
+                    else:
+                        self.menu_option(option)
+                        print(f"Reiniciando método: {option}")
+                        sleep(1)
+                        continue
         except requests.RequestException as e:
             print(f"Erro na requisição: {e}")
             input("APERTE ENTER PARA CONTINUAR")
@@ -303,9 +397,17 @@ class App:
         Método para sair do programa.
         """
         self.menu_option("Exit")
-        response = input("Deseja mesmo sair? [Sim/Não]\n").strip().lower()
-        if confirm_exit(response) and response in ["sim", "s"]:
+        responseValid = False
+        while not responseValid:
+            self.menu_option("Exit")
+            response = input("Deseja mesmo sair? [Sim/Não]\n").strip().lower()
+            responseValid = confirm_exit(response)
+            if not responseValid:
+                input("APERTE ENTER PARA CONTINUAR")
+            
+        if response in ["sim", "s"]:
             self.continuar = False
+            self.menu_option("good bye!")
             print("Programa Finalizado!")
 
     def run(self) -> None:

@@ -49,7 +49,7 @@ def validate_value(value: str) -> bool:
 def validate_id(id: str):
     try:
         if id:
-            if id.isdigit():
+            if id.isdigit() and id != None:
                 return True
             else:
                 raise ValidateError("O Id deve conter apenas números.")
