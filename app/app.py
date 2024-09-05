@@ -116,9 +116,9 @@ class App:
                 print("ID inválido. Por favor, insira um número válido.")
                 input("APERTE ENTER PARA CONTINUAR")
         return int(id)
-    
-    def view_dados(self, dados: list[list], option: str, id = False):
-        dados_list = ["id", "nome", "idade"]
+
+    def view_dados(self, dados: list[list], option: str, id: bool = False):
+        dados_list = ["id", "nome", "marca", "ano"]
         self.menu_option(option)
         if id:
             self.menu_option("ids")
@@ -137,7 +137,11 @@ class App:
                     for indice, campo in enumerate(dados_list):
                         valor = dado[indice] if indice < len(dado) else "Dados ausentes"
                         print(f"{campo:<8} ->   {valor}")
-                    input("APERTE ENTER PARA VER O PRÓXIMO DADO!") if len(dados) > 1 else "APERTE ENTER PARA CONTINUAR"
+                    (
+                        input("APERTE ENTER PARA VER O PRÓXIMO DADO!")
+                        if len(dados) > 1
+                        else input("APERTE ENTER PARA CONTINUAR")
+                    )
             if not id:
                 self.menu_option(option)
                 print("Dados exibidos com sucesso!")
@@ -146,12 +150,14 @@ class App:
             self.valid = False
             print("Nenhum dado encontrado!")
             input("APERTE ENTER PARA CONTINUAR")
-    
-    def voltar_menu(self, option:str)-> bool:
+
+    def voltar_menu(self, option: str) -> bool:
         confirmValid = False
         while not confirmValid:
             self.menu_option(option)
-            confirm = str(input("Deseja voltar para o menu? [Sim/Não]\n")).lower().strip()
+            confirm = (
+                str(input("Deseja voltar para o menu? [Sim/Não]\n")).lower().strip()
+            )
             confirmValid = confirm_exit(confirm)
             if not confirmValid:
                 input("APERTE ENTER PARA CONTINUAR")
@@ -161,7 +167,7 @@ class App:
             sleep(1)
             return True
         return False
-            
+
     def post(self) -> None:
         """
         Método para enviar dados (POST).
@@ -179,7 +185,13 @@ class App:
                     while not saida_valida:
                         self.menu_option(option)
                         dados_view = dados
-                        print("\n".join(f"{dado:<6} -> {valor:>6}" for dado, valor in dados_view.items() if dado != "message"))
+                        print(
+                            "\n".join(
+                                f"{dado:<6} -> {valor:>6}"
+                                for dado, valor in dados_view.items()
+                                if dado != "message"
+                            )
+                        )
                         confirm = (
                             input(
                                 "Todos os dados foram adicionados com sucesso? [Sim/Não]\n"
@@ -192,8 +204,12 @@ class App:
                             input("APERTE ENTER PARA CONTINUAR")
                     if confirm in ["sim", "s"]:
                         dados["table"] = self.table
-                        new_dict = {dado: valor for dado, valor in dados.items() if dado != "message"}
-                        response = requests.post(f"{self.url}/post", json= new_dict)
+                        new_dict = {
+                            dado: valor
+                            for dado, valor in dados.items()
+                            if dado != "message"
+                        }
+                        response = requests.post(f"{self.url}/post", json=new_dict)
                         self.menu_option(option)
                         if response.status_code == 201:
                             try:
@@ -212,10 +228,14 @@ class App:
                                 continue
                         else:
                             try:
-                                error_message = response.json().get("message", "Nenhuma mensagem de erro fornecida.")
+                                error_message = response.json().get(
+                                    "message", "Nenhuma mensagem de erro fornecida."
+                                )
                             except ValueError:
                                 error_message = response.text
-                            print(f"Erro ao enviar dados: {response.status_code} - {error_message}")
+                            print(
+                                f"Erro ao enviar dados: {response.status_code} - {error_message}"
+                            )
                             input("APERTE ENTER PARA CONTINUAR")
 
                         if self.voltar_menu(option):
@@ -236,7 +256,7 @@ class App:
             print(f"Erro: {e}")
             input("APERTE ENTER PARA CONTINUAR")
 
-    def get(self,option: str = "get", search: bool = False, method:str = "") -> None:
+    def get(self, option: str = "get", search: bool = False, method: str = "") -> None:
         """
         Método para obter dados (GET).
         """
@@ -259,15 +279,15 @@ class App:
                             input("APERTE ENTER PARA CONTINUAR")
                         tentativas = 2
                         dados = json.loads(dados.get("content"))
-                        self.view_dados(dados, option = method, id = True)
+                        self.view_dados(dados, option=method, id=True)
                     else:
                         self.menu_option(option)
                         print("Requisição bem sucedida!")
                         input("APERTE ENTER PARA CONTINUAR")
-                        self.menu_option(option)
                         try:
                             dados = response.json()
                         except ValueError:
+                            self.menu_option(option)
                             print("Erro ao decodificar a resposta JSON.")
                             input("APERTE ENTER PARA CONTINUAR")
                         dados = json.loads(dados.get("content"))
@@ -297,7 +317,6 @@ class App:
         except Exception as e:
             print(f"Erro: {e}")
             input("APERTE ENTER PARA CONTINUAR")
-
 
     def patch(self) -> None:
         """
@@ -404,7 +423,7 @@ class App:
             responseValid = confirm_exit(response)
             if not responseValid:
                 input("APERTE ENTER PARA CONTINUAR")
-            
+
         if response in ["sim", "s"]:
             self.continuar = False
             self.menu_option("good bye!")
