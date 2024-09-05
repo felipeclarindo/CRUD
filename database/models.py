@@ -76,7 +76,7 @@ class Crud:
             cursor = connection.cursor()
             cursor.execute(command, id=id)
             connection.commit()
-            return {"status": "success", "message": f"id {id} deletado!"}
+            return {"status": "success", "message": f"Id: {id} deletado!"}
         except ValueError as v:
             return {"status": "error", "message": str(v)}
         except Exception as e:
