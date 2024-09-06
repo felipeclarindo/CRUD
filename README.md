@@ -16,15 +16,23 @@ git clone https://github.com/felipeclarindo/crud
 cd crud
 ```
 
-4. **Execute o Programa**
+3. **Rode a API**
+
 ```bash
-    python src/main.py
+    python ./database/api.py
+```
+
+4. **Execute o Programa**
+
+```bash
+    python ./main.py
 ```
 
 # Funcionalidades
 
 - **Manipulação de dados de uma database**: Métodos de inserção, atualização, criação e remoção de dados utilizando requests.
 - **Interface simples e intuitiva**: Interface em linha de comando simples e entuitiva para manipulação de um banco de dados.
+- **Dinamico**: Interface dinamica, podendo manipular a tabela que desejar!
 
 ## Contribuição
 
