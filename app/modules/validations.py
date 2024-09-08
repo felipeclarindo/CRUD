@@ -46,11 +46,14 @@ def validate_value(value: str) -> bool:
     return False
 
 
-def validate_id(id: str):
+def validate_id(id: str, id_list: list[id]) -> bool:
     try:
         if id:
             if id.isdigit() and id != None:
-                return True
+                if int(id) in id_list:
+                    return True
+                else:
+                    raise ValidateError("Id não encontrado.")
             else:
                 raise ValidateError("O Id deve conter apenas números.")
         else:
