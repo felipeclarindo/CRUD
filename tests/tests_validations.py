@@ -1,4 +1,4 @@
-from ..app.modules.validations import (
+from ..app.validations.validations import (
     validate_column,
     validate_table,
     validate_value,

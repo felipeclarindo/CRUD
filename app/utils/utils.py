@@ -1,6 +1,6 @@
 import requests
-from .exceptions import InvalidResponseError, RequestError
-
+from ..modules.exceptions import InvalidResponseError, RequestError
+import os
 
 def confirm_exit(response: str) -> bool:
     try:
@@ -27,3 +27,7 @@ def confirm_requisition(response: requests.models.Response, method: str):
     except RequestError as e:
         print(e)
     return False
+
+def check_folder() -> None:
+    if not os.path.exists("./app/json") :
+        os.mkdir("json")

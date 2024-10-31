@@ -1,4 +1,4 @@
-from .exceptions import ValidateError
+from ..modules.exceptions import ValidateError
 
 
 def validate_table(table: str):

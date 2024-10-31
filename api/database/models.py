@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from config import connect
+from .config import connect
 import json
 
 
@@ -100,6 +100,30 @@ class Crud:
             return {
                 "status": "success",
                 "message": json.dumps(usuarios) if usuarios else "{}",
+            }
+        except ValueError as v:
+            return {"status": "error", "message": str(v)}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+        finally:
+            if cursor:
+                cursor.close()
+
+    # Obter dados de um id especifico
+    def get_with_id(self, table: str, id: int):
+        """
+        Método para pegar dados de um id especifico
+        """
+        cursor = None
+        try:
+            connection = self.get_connection()
+            command = f"SELECT * FROM {table.upper()} WHERE ID = :id"
+            cursor = connection.cursor()
+            cursor.execute(command, id=id)
+            usuario = cursor.fetchone()
+            return {
+                "status": "success",
+                "message": json.dumps(usuario) if usuario else "{}",
             }
         except ValueError as v:
             return {"status": "error", "message": str(v)}
