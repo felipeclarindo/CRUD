@@ -21,13 +21,10 @@ def connect():
         print(f"Conectando ao banco de dados em {host}:{port} como {username}...")
         sleep(1)
         connection = oracledb.connect(dsn)
-        print("Conexão feita com sucesso!")
-        return connection
-    except Exception:
-        print("Falha na conexão.")
+        if connection:
+            print("Conexão feita com sucesso!")
+            return connection
+    except Exception as e:
+        print(f"Falha na conexão: {e}.")
     return None
 
-
-if __name__ == "__main__":
-    # Testando conexão
-    connect()

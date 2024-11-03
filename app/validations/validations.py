@@ -5,7 +5,7 @@ def validate_table(table: str):
     try:
         table = table.strip()
         if table:
-            if table.isalnum():
+            if table.isalnum() or "_" in table:
                 return True
             else:
                 raise ValidateError("Não é aceito caracteres especiais.")

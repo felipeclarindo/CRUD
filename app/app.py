@@ -2,7 +2,7 @@ from os import system, name
 from time import sleep
 import json
 import requests
-from .utils.utils import confirm_exit, confirm_requisition
+from .utils.utils import confirm_exit
 from .validations.validations import (
     validate_column,
     validate_value,
@@ -126,6 +126,7 @@ class App:
         Salva os dados em um arquivo JSON.
         """
         try:
+            dados = [dict(zip(["id", "nome", "marca", "ano"], dado)) for dado in dados]
             option = option.lower()
             self.menu_option(option)
             confirm_valid = False
@@ -138,6 +139,10 @@ class App:
             if confirm.lower() in ["sim", "s", "ss"]:
                 self.menu_option(option)
                 filename= input("Informe o nome do arquivo: ").strip()
+                self.menu_option(option)
+                print("Gerando arquivo JSON...")
+                sleep(1)
+                self.menu_option(option)
                 print(generate_json_file(dados, filename=f"{filename}.json"))
                 input("APERTE ENTER PARA CONTINUAR")
         except Exception as e:
@@ -237,12 +242,12 @@ class App:
                             input("APERTE ENTER PARA CONTINUAR")
                     if confirm in ["sim", "s"]:
                         dados["table"] = self.table
-                        dados = {
+                        data = {
                             dado: valor
                             for dado, valor in dados.items()
                             if dado != "message"
                         }
-                        response = requests.post(f"{self.url}/api/table", params=dados)
+                        response = requests.post(f"{self.url}/api/table", json=data)
                         self.menu_option(option)
                         if response.status_code == 201:
                             try:
@@ -301,21 +306,21 @@ class App:
             max_tentativas = 3
 
             while tentativas < max_tentativas:
-                params = {"table": self.table}
-                response = requests.get(f"{self.url}/api/table", params=params)
+                data = {"table": self.table}
+                response = requests.get(f"{self.url}/api/table", json=data)
 
                 if response.status_code == 200:
                     try:
-                        dados = response.json()  # Decodifica o JSON da resposta
+                        data = response.json()  
                     except ValueError:
                         print("Erro ao decodificar a resposta JSON.")
                         input("APERTE ENTER PARA CONTINUAR")
                         tentativas += 1
                         continue
-                    print(dados)
-                    dados = json.loads(dados.get("content"))
+                    dados = data.get("message")
+                    dados = json.loads(dados)
                     if search:
-                        self.view_dados(dados, option=method, id=True)
+                        self.view_dados(dados, option=method)
                     else:
                         self.view_dados(dados, option)
                         self.save_dados(dados, option)
@@ -358,8 +363,8 @@ class App:
             max_tentativas = 3
 
             while tentativas < max_tentativas:
-                params = {"table": self.table}
-                response = requests.get(f"{self.url}/api/table/{id}", params=params)
+                data = {"table": self.table}
+                response = requests.get(f"{self.url}/api/table/{id}", json=data)
 
                 if response.status_code == 200:
                     try:
@@ -411,12 +416,12 @@ class App:
                     option_id = f"{option} id: {id}"
                     column = self.input_column(option_id)
                     new_value = self.input_value(option_id, new=True)
-                    dados = {
+                    data = {
                         "table": self.table,
                         "column": column,
                         "value": new_value,
                     }
-                    response = requests.patch(f"{self.url}/api/table/{id}", params=dados)
+                    response = requests.patch(f"{self.url}/api/table/{id}", json=data)
                     if response.status_code == 200:
                         self.menu_option(option)
                         print("Dados atualizados com sucesso!")
@@ -454,9 +459,9 @@ class App:
             while True:
                 option = "delete"
                 id = self.input_id(option)
-                dados = {"table": self.table}
+                data = {"table": self.table}
                 if self.valid and id:
-                    response = requests.delete(f"{self.url}/delete/{id}", params=dados)
+                    response = requests.delete(f"{self.url}/delete/{id}", json=data)
                     if response.status_code == 200:
                         self.menu_option(option)
                         response = response.json()
